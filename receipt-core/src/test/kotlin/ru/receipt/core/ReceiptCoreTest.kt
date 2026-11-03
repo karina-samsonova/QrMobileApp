@@ -88,4 +88,8 @@ class ReceiptCoreTest {
     @Test fun r6() { assertEquals(ReconcileStatus.OK, reconcile(qr(q2), parseReceiptText(o1))) }
     @Test fun d1() { val history = ReceiptHistory(); assertTrue(history.save(qr(q1))); assertFalse(history.save(qr(q1))); assertEquals(1, history.count()) }
     @Test fun d2() { val history = ReceiptHistory(); assertTrue(history.save(qr(q1))); assertTrue(history.save(qr(q2))); assertEquals(2, history.count()) }
+    @Test fun suppliedReceipt2InlinePriceFirst() { val v = parseReceiptText(listOf("Чипсы с беконом 19.60*2 =39.20", "Колбаса 100.00 * 0.500 =50.00", "ИТОГ =89.20")); assertEquals(2, v.items.size); item(v.items[0], "Чипсы с беконом", "2", 1960, 3920); item(v.items[1], "Колбаса", "0.500", 10000, 5000); assertEquals(8920L, v.totalKopecks) }
+    @Test fun suppliedReceipt3SeparateQuantityFirst() { val v = parseReceiptText(listOf("Шоколад горький", "1.000 x 92.00 =92.00", "ИТОГ =92.00")); assertEquals(1, v.items.size); item(v.items[0], "Шоколад горький", "1", 9200, 9200) }
+    @Test fun suppliedReceipt4SeparatePriceFirst() { val v = parseReceiptText(listOf("АКРИЛОВЫЕ КРАСКИ 6 ЦВЕТОВ", "100.00 * 1 =100.00", "ИТОГ 100.00")); assertEquals(1, v.items.size); item(v.items[0], "АКРИЛОВЫЕ КРАСКИ 6 ЦВЕТОВ", "1", 10000, 10000) }
+    @Test fun suppliedReceipt1AmountOnNextLine() { val v = parseReceiptText(listOf("Кирпич пустотелый одинарный М-150", "800 X 10.22", "Стоимость........8176.00", "ИТОГ =8176.00")); assertEquals(1, v.items.size); item(v.items[0], "Кирпич пустотелый одинарный М-150", "800", 1022, 817600) }
 }

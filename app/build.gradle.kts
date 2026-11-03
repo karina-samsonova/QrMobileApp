@@ -34,4 +34,6 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.mlkit.barcode)
     implementation(libs.mlkit.text)
+    implementation(libs.tesseract)
+    implementation(libs.exif)
 }

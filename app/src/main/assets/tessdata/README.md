@@ -1,0 +1,1 @@
+Языковые модели `rus.traineddata` и `eng.traineddata` взяты из официального репозитория [tesseract-ocr/tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast). Лицензия набора — [Apache-2.0](https://github.com/tesseract-ocr/tessdata_fast/blob/main/LICENSE). Они встроены в APK, поэтому распознавание Tesseract выполняется без сети.

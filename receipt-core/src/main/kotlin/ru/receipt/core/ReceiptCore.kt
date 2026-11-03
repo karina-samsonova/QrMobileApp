@@ -42,10 +42,12 @@ private val qrDatePattern = Regex("^(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})(\\
 private val moneyPattern = Regex("^\\d+(?:[.,]\\d{1,2})?$")
 private val amountToken = "(\\d[\\d ]*(?:[.,]\\d{1,2})?)"
 private val quantityToken = "(\\d[\\d ]*(?:[.,]\\d+)?)"
-private val itemPattern = Regex("^\\s*$quantityToken\\s*[xXхХ*]\\s*$amountToken\\s*=\\s*$amountToken\\s*$")
+private val itemPattern = Regex("^\\s*(.*?)\\s*$quantityToken\\s*[xXхХ*]\\s*$quantityToken\\s*=\\s*$amountToken(?:\\s+.*)?$")
+private val quantityPricePattern = Regex("^\\s*(.*?)\\s*$quantityToken\\s*[xXхХ*]\\s*$quantityToken\\s*$")
+private val costPattern = Regex("^\\s*СТОИМОСТЬ[\\s.:=]*$amountToken\\s*$", RegexOption.IGNORE_CASE)
 private val totalPattern = Regex("^\\s*(?:ИТОГО?|К\\s+ОПЛАТЕ)\\s*[:=]?\\s*$amountToken\\s*$", RegexOption.IGNORE_CASE)
 private val datePattern = Regex("(?<!\\d)(\\d{2})\\.(\\d{2})\\.(\\d{2}|\\d{4})\\s+(\\d{2}):(\\d{2})(?!\\d)")
-private val servicePattern = Regex("^(?:КАССОВЫЙ ЧЕК|ПРИХОД|ВОЗВРАТ ПРИХОДА|(?:ООО|ИП|АО|ПАО|НАЛИЧНЫМИ|БЕЗНАЛИЧНЫМИ|ПОЛУЧЕНО|СДАЧА)(?:\\s|[:=]|$).*)$", RegexOption.IGNORE_CASE)
+private val servicePattern = Regex("^(?:КАССОВЫЙ ЧЕК|ПРИХОД|ВОЗВРАТ ПРИХОДА|(?:ООО|ИП|АО|ПАО|НАЛИЧНЫМИ|БЕЗНАЛИЧНЫМИ|ПОЛУЧЕНО|СДАЧА|НДС|СТОИМОСТЬ|ВСЕГО)(?:\\s|[:=.]|$).*)$", RegexOption.IGNORE_CASE)
 
 /** Monetary values are always parsed and stored as integer kopecks. */
 private fun kopecks(value: String): Long? {
@@ -97,18 +99,42 @@ private fun isService(line: String): Boolean {
         datePattern.containsMatchIn(clean) || itemPattern.matches(clean)
 }
 
+private fun parseItemNumbers(leftRaw: String, rightRaw: String, amountRaw: String): Triple<BigDecimal, Long, Long>? {
+    val left = try { BigDecimal(leftRaw.replace(" ", "").replace(',', '.')) } catch (_: NumberFormatException) { return null }
+    val right = try { BigDecimal(rightRaw.replace(" ", "").replace(',', '.')) } catch (_: NumberFormatException) { return null }
+    val leftMoney = kopecks(leftRaw)
+    val rightMoney = kopecks(rightRaw)
+    val amount = kopecks(amountRaw) ?: return null
+    val priceFirst = when {
+        leftMoney == null -> false // more than two decimals: weighted quantity
+        rightMoney == null -> true
+        left.scale() == 2 && right.scale() == 0 && right <= BigDecimal.TEN -> true
+        right.scale() == 2 && left.scale() == 0 && left <= BigDecimal.TEN -> false
+        left.scale() > 0 && right.scale() > 0 && right <= BigDecimal.TEN && left > right -> true
+        else -> false
+    }
+    val quantity = if (priceFirst) right else left
+    val price = if (priceFirst) leftMoney ?: return null else rightMoney ?: return null
+    if (quantity <= BigDecimal.ZERO) return null
+    return Triple(quantity, price, amount)
+}
+
 fun parseReceiptText(lines: List<String>): ParsedText {
     var total: Long? = null
     val items = mutableListOf<Item>()
     for ((index, line) in lines.withIndex()) {
         if (total == null) total = totalPattern.matchEntire(line)?.groupValues?.get(1)?.let(::kopecks)
-        val match = itemPattern.matchEntire(line) ?: continue
-        val quantity = try { BigDecimal(match.groupValues[1].replace(" ", "").replace(',', '.')) }
-            catch (_: NumberFormatException) { continue }
-        val price = kopecks(match.groupValues[2]) ?: continue
-        val amount = kopecks(match.groupValues[3]) ?: continue
+        val match = itemPattern.matchEntire(line)
+        val partial = if (match == null && index + 1 < lines.size) quantityPricePattern.matchEntire(line) else null
+        val cost = partial?.let { costPattern.matchEntire(lines[index + 1]) }
+        if (match == null && cost == null) continue
+        val groups = match?.groupValues ?: partial!!.groupValues
+        val amountRaw = match?.groupValues?.get(4) ?: cost!!.groupValues[1]
+        val numbers = parseItemNumbers(groups[2], groups[3], amountRaw) ?: continue
+        val (quantity, price, amount) = numbers
         val names = mutableListOf<String>()
-        for (previous in (index - 1) downTo maxOf(0, index - 2)) {
+        if (groups[1].isNotBlank()) names += groups[1].trim()
+        else for (previous in (index - 1) downTo maxOf(0, index - 2)) {
             if (isService(lines[previous])) break
             names.add(0, lines[previous].trim())
         }

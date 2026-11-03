@@ -8,6 +8,8 @@ barcode = "17.3.0"
 text = "16.0.1"
 junit = "4.13.2"
 desugar = "2.0.3"
+tesseract = "4.9.0"
+exif = "1.3.7"
 
 [libraries]
 camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
@@ -20,6 +22,8 @@ mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "b
 mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "text" }
 junit = { module = "junit:junit", version.ref = "junit" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
+tesseract = { module = "cz.adaptech.tesseract4android:tesseract4android", version.ref = "tesseract" }
+exif = { module = "androidx.exifinterface:exifinterface", version.ref = "exif" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
