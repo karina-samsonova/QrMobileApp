@@ -83,6 +83,8 @@ class MainActivity : ComponentActivity() {
     private var parsedText: ParsedText? = null
     private var rawLines: List<String> = emptyList()
     private var lastQrRaw: String? = null
+    private var lastLiveQrRaw: String? = null
+    private var lastLiveQrAt = 0L
     private var selectedEngine = "Tesseract"
     private val measurements = mutableMapOf<String, OcrMeasurement>()
     private var photoGeneration = 0
@@ -96,7 +98,7 @@ class MainActivity : ComponentActivity() {
         }
     }
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) analyzePhoto(uri)
+        if (uri != null) { resetReceipt(); analyzePhoto(uri) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,6 +165,7 @@ class MainActivity : ComponentActivity() {
 
     private fun resetReceipt() {
         qrData = null; parsedText = null; rawLines = emptyList(); lastQrRaw = null
+        lastLiveQrRaw = null; lastLiveQrAt = 0L
         measurements.clear(); photoGeneration++; photoPending = false
         overlay.clear(); rawView.text = ""; rawView.visibility = View.GONE
         saveView.text = ""; comparisonView.text = "Сравнение появится после обработки фото."
@@ -206,7 +209,7 @@ class MainActivity : ComponentActivity() {
                         qrTask.addOnSuccessListener { codes ->
                             val code = codes.firstOrNull { it.rawValue != null }
                             overlay.setQrBox(mapBox(code?.boundingBox, proxy))
-                            code?.rawValue?.let(::onQrFound)
+                            code?.rawValue?.let { onQrFound(it, fromLiveCamera = true) }
                         }.addOnFailureListener { overlay.setQrBox(null) }
                         textTask.addOnSuccessListener { result ->
                             val totalLine = result.textBlocks.flatMap { it.lines }.firstOrNull { line ->
@@ -237,7 +240,8 @@ class MainActivity : ComponentActivity() {
         return RectF(rect).also { CoordinateTransform(source, target).mapRect(it) }
     }
 
-    private fun onQrFound(raw: String) {
+    private fun onQrFound(raw: String, fromLiveCamera: Boolean = false) {
+        if (fromLiveCamera) { lastLiveQrRaw = raw; lastLiveQrAt = SystemClock.elapsedRealtime() }
         runOnUiThread {
             if (raw == lastQrRaw) return@runOnUiThread
             lastQrRaw = raw
@@ -252,6 +256,9 @@ class MainActivity : ComponentActivity() {
 
     private fun capturePhoto() {
         val capture = imageCapture ?: return
+        val recentLiveQr = lastLiveQrRaw?.takeIf { qrData != null && SystemClock.elapsedRealtime() - lastLiveQrAt < 5_000L }
+        resetReceipt()
+        recentLiveQr?.let { onQrFound(it) }
         val file = File.createTempFile("receipt-", ".jpg", cacheDir)
         cameraButton.isEnabled = false
         capture.takePicture(ImageCapture.OutputFileOptions.Builder(file).build(), cameraWorker, object : ImageCapture.OnImageSavedCallback {
