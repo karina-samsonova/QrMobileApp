@@ -416,3 +416,35 @@ class ReceiptHistory { fun save(qr: QrData, text: ParsedText?): Boolean; fun cou
 - [ML Kit Text Recognition v2 (Android)](https://developers.google.com/ml-kit/vision/text-recognition/v2/android) и [поддерживаемые языки](https://developers.google.com/ml-kit/vision/text-recognition/v2/languages)
 - [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android)
 - [Apple Vision: распознавание текста](https://developer.apple.com/documentation/vision/recognizing-text-in-images)
+
+---
+
+## 12. Как запустить решение
+
+Реализованы обязательные этапы 1–3 на **Android/Kotlin**. Модуль `:receipt-core` не зависит от Android: в нём находятся модели, разбор QR и OCR-строк, сверка и сценарные тесты. Приложение находится в `:app`: CameraX показывает превью и делает фото, ML Kit Barcode Scanning читает QR, ML Kit Text Recognition v2 распознаёт строки на устройстве. Фото также можно выбрать из галереи; для этого не нужно разрешение на камеру.
+
+### Требования и версии
+
+- JDK 17; Android Studio Ladybug или новее; Android SDK Platform 35.
+- Gradle 8.9 (wrapper), Android Gradle Plugin 8.7.3, Kotlin 2.0.21.
+- minSdk 24, targetSdk/compileSdk 35; CameraX 1.4.1; ML Kit Barcode Scanning 17.3.0; ML Kit Text Recognition 16.0.1; desugar_jdk_libs 2.0.3 для `java.time` на API 24–25.
+- Точные версии библиотек закреплены в `gradle/libs.versions.toml`.
+
+### Быстрая проверка
+
+На Windows используйте `gradlew.bat`, на macOS/Linux — `./gradlew`:
+
+```powershell
+./gradlew.bat :receipt-core:test
+./gradlew.bat :app:installDebug
+```
+
+Откройте проект в Android Studio, дождитесь синхронизации Gradle, подключите Android-телефон с USB-отладкой или запустите эмулятор API 24+. Разрешите камеру. Наведите её на QR чека, затем нажмите «Сфотографировать чек». Для уже снятого чека нажмите «Выбрать фото из галереи»: на выбранном изображении приложение ищет и QR, и текст. После распознавания видны дата, сумма, тип операции, позиции и статус сверки; кнопка под результатом раскрывает исходные строки OCR. «Новый чек» очищает предыдущий результат. При отказе в разрешении приложение продолжает работать с галереей.
+
+Тестовый набор содержит отдельные тесты Q1–Q8, T1–T5, I1–I5, R1–R6 и D1–D2. D1–D2 проверяют только дедупликацию в памяти; офлайн-БД и экран истории этапа 5 не реализованы.
+
+### Образцы и границы результата
+
+Публичные фотографии для ручной проверки находятся в [`examples/`](examples/README.md). Это интернет-примеры, а не собственные чеки для сравнительной таблицы этапа 4. До измерений на настоящем устройстве не заявляется точность OCR или время распознавания. ML Kit Text Recognition не поддерживает русский язык официально, поэтому названия товаров на русских чеках могут читаться с ошибками. Парсер позиций рассчитан на формат строк, указанный в разделе 5; на реальных чеках формат часто отличается. Подсветка в реальном времени, таблица замеров на собственных чеках, локальная БД и второй OCR-движок (этапы 4–5) пока не реализованы.
+
+Сценарий видео с точным таймингом: [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md).
