@@ -4,7 +4,7 @@ Android/Kotlin, этапы 1–5: CameraX, фискальный QR (ML Kit), OCR
 
 ## Видео
 
-Видео записывается отдельно по строгому сценарию [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md). Ссылка на запись пока отсутствует. По критериям задания без видео работа не считается завершённой для сдачи; PR открыт как черновик, чтобы код и замеры можно было проверить заранее.
+Видео записывается отдельно по строгому сценарию [`VIDEO_SCRIPT.md`](https://github.com/switerElly/QrMobileApp/blob/solution/varfolomeeva/VIDEO_SCRIPT.md). Ссылка на запись пока отсутствует. По критериям задания без видео работа не считается завершённой для сдачи; PR открыт как черновик, чтобы код и замеры можно было проверить заранее.
 
 ## Что сделано
 
@@ -14,7 +14,7 @@ Android/Kotlin, этапы 1–5: CameraX, фискальный QR (ML Kit), OCR
 - [x] Этап 4 — рамки QR и итога на превью; сравнительные замеры на пяти предоставленных образцах.
 - [x] Этап 5* — SQLite-история, обновление повторного чека, Tesseract и ML Kit с переключателем.
 
-`./gradlew.bat :receipt-core:test :app:assembleDebug`: `BUILD SUCCESSFUL`, 30/30 тестов. APK установлен и запущен на эмуляторе Android API 35. Чеки №2–5 дали четыре записи в истории; повторное сканирование №2 не создало дубль. Подробные результаты и снимки экрана: [`verification/README.md`](verification/README.md).
+`./gradlew.bat :receipt-core:test :app:assembleDebug`: `BUILD SUCCESSFUL`, 30/30 тестов. APK установлен и запущен на эмуляторе Android API 35. Чеки №2–5 дали четыре записи в истории; повторное сканирование №2 не создало дубль. Подробные результаты и снимки экрана: [`verification/README.md`](https://github.com/switerElly/QrMobileApp/blob/solution/varfolomeeva/verification/README.md).
 
 ## Таблица сравнения подходов (этап 4)
 
