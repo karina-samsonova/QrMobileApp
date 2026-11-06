@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
     private val ocrWorker = Executors.newSingleThreadExecutor()
     private val scanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build())
     private val mlKit = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-    private val tesseract by lazy { TesseractReader(applicationContext) }
+    private var tesseract: TesseractReader? = null
     private lateinit var previewView: PreviewView
     private lateinit var overlay: RecognitionOverlay
     private lateinit var cameraButton: Button
@@ -281,7 +281,12 @@ class MainActivity : ComponentActivity() {
         parsedText = null; rawLines = emptyList(); measurements.clear()
         comparisonView.text = "Сравнение выполняется…"; statusView.text = "Распознавание фото…"
         val remaining = AtomicInteger(3)
-        fun finished() { if (remaining.decrementAndGet() == 0) { temporaryFile?.delete(); photoPending = false } }
+        fun finished() {
+            if (remaining.decrementAndGet() == 0) {
+                temporaryFile?.delete()
+                if (generation == photoGeneration) photoPending = false
+            }
+        }
         scanner.process(image).addOnCompleteListener { initial ->
             val found = if (initial.isSuccessful) initial.result.firstOrNull { it.rawValue != null }?.rawValue else null
             if (found != null) {
@@ -319,7 +324,10 @@ class MainActivity : ComponentActivity() {
 
         ocrWorker.execute {
             val start = SystemClock.elapsedRealtime()
-            val measurement = try { OcrMeasurement("Tesseract", tesseract.recognize(uri), SystemClock.elapsedRealtime() - start) }
+            val measurement = try {
+                val reader = tesseract ?: TesseractReader(applicationContext).also { tesseract = it }
+                OcrMeasurement("Tesseract", reader.recognize(uri), SystemClock.elapsedRealtime() - start)
+            }
                 catch (error: Exception) { OcrMeasurement("Tesseract", emptyList(), SystemClock.elapsedRealtime() - start, error.localizedMessage ?: "Ошибка OCR") }
             runOnUiThread { if (generation == photoGeneration) onMeasurement(measurement); finished() }
         }
@@ -395,7 +403,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         scanner.close(); mlKit.close(); cameraWorker.shutdown()
-        ocrWorker.execute { tesseract.close() }
+        ocrWorker.execute { tesseract?.close(); tesseract = null }
         ocrWorker.shutdown()
     }
 }
