@@ -1,0 +1,31 @@
+[versions]
+agp = "8.7.3"
+kotlin = "2.0.21"
+camerax = "1.4.1"
+activity = "1.9.3"
+core = "1.15.0"
+barcode = "17.3.0"
+text = "16.0.1"
+junit = "4.13.2"
+desugar = "2.0.3"
+tesseract = "4.9.0"
+exif = "1.3.7"
+
+[libraries]
+camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+activity = { module = "androidx.activity:activity", version.ref = "activity" }
+core = { module = "androidx.core:core-ktx", version.ref = "core" }
+mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcode" }
+mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "text" }
+junit = { module = "junit:junit", version.ref = "junit" }
+desugar = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
+tesseract = { module = "cz.adaptech.tesseract4android:tesseract4android", version.ref = "tesseract" }
+exif = { module = "androidx.exifinterface:exifinterface", version.ref = "exif" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

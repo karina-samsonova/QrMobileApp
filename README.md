@@ -416,3 +416,37 @@ class ReceiptHistory { fun save(qr: QrData, text: ParsedText?): Boolean; fun cou
 - [ML Kit Text Recognition v2 (Android)](https://developers.google.com/ml-kit/vision/text-recognition/v2/android) и [поддерживаемые языки](https://developers.google.com/ml-kit/vision/text-recognition/v2/languages)
 - [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android)
 - [Apple Vision: распознавание текста](https://developer.apple.com/documentation/vision/recognizing-text-in-images)
+
+---
+
+## 12. Как запустить решение
+
+Реализованы этапы 1–5 на **Android/Kotlin**. Независимый от Android модуль `:receipt-core` содержит модели, разбор QR и OCR-строк, сверку и сценарные тесты. Приложение `:app` использует CameraX, ML Kit Barcode Scanning, ML Kit Text Recognition v2 и Tesseract4Android с русской и английской моделями. На превью подсвечиваются найденные QR и строка итога. Фото можно снять камерой, выбрать из галереи или открыть один из пяти предоставленных образцов. Чеки с фискальным QR сохраняются в SQLite без повторов; экран «История чеков» показывает сохранённые данные.
+
+### Требования и версии
+
+- JDK 17; Android Studio Ladybug или новее; Android SDK Platform 35.
+- Gradle 8.9 (wrapper), Android Gradle Plugin 8.7.3, Kotlin 2.0.21.
+- minSdk 24, targetSdk/compileSdk 35; CameraX 1.4.1; ML Kit Barcode Scanning 17.3.0; ML Kit Text Recognition 16.0.1; Tesseract4Android 4.9.0; desugar_jdk_libs 2.0.3 для `java.time` на API 24–25.
+- Точные версии библиотек закреплены в `gradle/libs.versions.toml`.
+
+### Быстрая проверка
+
+На Windows используйте `gradlew.bat`, на macOS/Linux — `./gradlew`:
+
+```powershell
+./gradlew.bat :receipt-core:test :app:assembleDebug
+./gradlew.bat :app:installDebug
+```
+
+Откройте проект в Android Studio, дождитесь синхронизации Gradle, подключите Android-телефон с USB-отладкой или запустите эмулятор API 24+. Разрешите камеру. Наведите её на QR чека, затем нажмите «Сфотографировать чек». Для готового снимка выберите «Выбрать фото из галереи», а для воспроизводимой демонстрации — «Открыть образец чека». На выбранном изображении приложение ищет и QR, и текст. После распознавания видны дата, сумма, тип операции, позиции, статус сверки и время двух OCR-движков; нижняя кнопка раскрывает исходные строки. В «Настройках OCR» переключается движок основного результата. «История чеков» показывает сохранённые QR-чеки, «Новый чек» очищает текущий экран. При отказе в разрешении приложение продолжает работать с фотографиями.
+
+Тестовый набор содержит сценарии Q1–Q8, T1–T5, I1–I5, R1–R6, D1–D2 и дополнительные проверки форматов строк. Локальная SQLite-БД проверена на эмуляторе: четыре распознанных QR-чека дали четыре записи, повторная обработка чека №2 не увеличила число записей.
+
+Проверка `:receipt-core:test :app:assembleDebug` завершилась `BUILD SUCCESSFUL`; 30 сценарных тестов прошли. APK установлен и запущен на эмуляторе Android API 35. Результаты пяти образцов, снимки экрана и оговорки приведены в [`verification/README.md`](verification/README.md).
+
+### Образцы и границы результата
+
+Пять файлов в [`examples/user/`](examples/user/README.md) предоставлены для этой работы и встроены в меню образцов. Отдельно в [`examples/`](examples/README.md) сохранены публичные интернет-примеры. Происхождение предоставленных файлов не подтверждает, что это собственные покупки; требование этапа 4 о пяти **своих** чеках нужно подтверждать отдельно при сдаче. ML Kit Text Recognition не поддерживает русский язык официально, поэтому русские названия часто читаются с ошибками. Пять замеров на эмуляторе показывают ограниченную точность обоих OCR-движков на маленьких снимках; результаты и неполные сверки представлены без исправления вручную. Работа камеры с физическим чеком проверяется при записи видео на телефоне.
+
+Запись демонстрации: [Google Drive](https://drive.google.com/drive/folders/1TAAqpGnKTuQ8CEfpmrW8bvcOcNiIEhXI?usp=drive_link).
